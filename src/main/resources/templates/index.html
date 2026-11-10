@@ -714,7 +714,7 @@
                                 class="form-control"
                                 placeholder="Contoh: 25"
                                 required
-                                th:value="${editItem != null ? editItem.bilangan1 : inputBilangan1}"
+                                th:value="${editItem != null ? editItem.formattedBilangan1 : inputBilangan1}"
                                 oninput="updateLivePreview()"
                             >
                         </div>
@@ -732,10 +732,10 @@
                                 required
                                 onchange="updateLivePreview()"
                             >
-                                <option value="+" th:selected="${(editItem != null and editItem.operator == '+') or (inputOperator == '+')}">+</option>
-                                <option value="*" th:selected="${(editItem != null and editItem.operator == '*') or (inputOperator == '*')}">*</option>
-                                <option value="-" th:selected="${(editItem != null and editItem.operator == '-') or (inputOperator == '-')}">-</option>
-                                <option value="/" th:selected="${(editItem != null and editItem.operator == '/') or (inputOperator == '/')}">/</option>
+                                <option value="+" th:selected="${(editItem != null and editItem.operator == '+') or (editItem == null and inputOperator == '+')}">+</option>
+                                <option value="*" th:selected="${(editItem != null and editItem.operator == '*') or (editItem == null and inputOperator == '*')}">*</option>
+                                <option value="-" th:selected="${(editItem != null and editItem.operator == '-') or (editItem == null and inputOperator == '-')}">-</option>
+                                <option value="/" th:selected="${(editItem != null and editItem.operator == '/') or (editItem == null and inputOperator == '/')}">/</option>
                             </select>
                         </div>
 
@@ -753,7 +753,7 @@
                                 class="form-control"
                                 placeholder="Contoh: 5"
                                 required
-                                th:value="${editItem != null ? editItem.bilangan2 : inputBilangan2}"
+                                th:value="${editItem != null ? editItem.formattedBilangan2 : inputBilangan2}"
                                 oninput="updateLivePreview()"
                             >
                         </div>

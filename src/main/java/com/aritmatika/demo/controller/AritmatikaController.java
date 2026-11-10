@@ -36,6 +36,14 @@ public class AritmatikaController {
             } else {
                 model.addAttribute("errorMessage", "Data dengan ID #" + editId + " tidak ditemukan.");
             }
+        } else if (!model.containsAttribute("inputBilangan1") && !listHasil.isEmpty()) {
+            HasilAritmatika lastItem = listHasil.get(listHasil.size() - 1);
+            model.addAttribute("inputBilangan1", lastItem.getFormattedBilangan1());
+            model.addAttribute("inputOperator", lastItem.getOperator());
+            model.addAttribute("inputBilangan2", lastItem.getFormattedBilangan2());
+            if (!model.containsAttribute("latestCalculation")) {
+                model.addAttribute("latestCalculation", lastItem);
+            }
         }
 
         return "index";
@@ -51,6 +59,9 @@ public class AritmatikaController {
         try {
             HasilAritmatika saved = service.saveCalculation(bilangan1, operator, bilangan2);
             redirectAttributes.addFlashAttribute("latestCalculation", saved);
+            redirectAttributes.addFlashAttribute("inputBilangan1", saved.getFormattedBilangan1());
+            redirectAttributes.addFlashAttribute("inputOperator", saved.getOperator());
+            redirectAttributes.addFlashAttribute("inputBilangan2", saved.getFormattedBilangan2());
             redirectAttributes.addFlashAttribute(
                     "successMessage",
                     "Operasi " + saved.getFormattedBilangan1() + " " + saved.getOperator() + " "
@@ -58,9 +69,9 @@ public class AritmatikaController {
                             + " berhasil dihitung dan disimpan ke database.");
         } catch (ArithmeticException | IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
-            redirectAttributes.addFlashAttribute("inputBilangan1", bilangan1);
+            redirectAttributes.addFlashAttribute("inputBilangan1", HasilAritmatika.formatNumber(bilangan1));
             redirectAttributes.addFlashAttribute("inputOperator", operator);
-            redirectAttributes.addFlashAttribute("inputBilangan2", bilangan2);
+            redirectAttributes.addFlashAttribute("inputBilangan2", HasilAritmatika.formatNumber(bilangan2));
         }
 
         return "redirect:/";
@@ -77,6 +88,9 @@ public class AritmatikaController {
         try {
             HasilAritmatika updated = service.updateCalculation(id, bilangan1, operator, bilangan2);
             redirectAttributes.addFlashAttribute("latestCalculation", updated);
+            redirectAttributes.addFlashAttribute("inputBilangan1", updated.getFormattedBilangan1());
+            redirectAttributes.addFlashAttribute("inputOperator", updated.getOperator());
+            redirectAttributes.addFlashAttribute("inputBilangan2", updated.getFormattedBilangan2());
             redirectAttributes.addFlashAttribute(
                     "successMessage",
                     "Data #" + id + " berhasil diperbarui menjadi: "
