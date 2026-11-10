@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="id" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator &amp; CRUD Operasi Aritmatika — PostgreSQL</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600;700&amp;display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-body: #f8fafc;
+            --bg-surface: #ffffff;
+            --bg-subtle: #f1f5f9;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --border-focus: #4f46e5;
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --primary-soft: #eef2ff;
+            --success: #059669;
+            --success-soft: #ecfdf5;
+            --success-border: #a7f3d0;
+            --warning: #d97706;
+            --warning-soft: #fffbeb;
+            --danger: #dc2626;
+            --danger-hover: #b91c1c;
+            --danger-soft: #fef2f2;
+            --danger-border: #fecaca;
+            --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+            --shadow-lg: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+            --radius-md: 10px;
+            --radius-lg: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-body);
+            background-image: radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.06) 0px, transparent 50%),
+                              radial-gradient(at 100% 0%, rgba(14, 165, 233, 0.06) 0px, transparent 50%);
+            color: var(--text-primary);
+            line-height: 1.5;
+            min-height: 100vh;
+            padding-bottom: 4rem;
+        }
+
+        /* Top Navigation / Header */
+        .topbar {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 30;
+        }
+
+        .topbar-inner {
+            max-width: 1040px;
+            margin: 0 auto;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary), #6366f1);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+        }
+
+        .brand-text h1 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+        }
+
+        .brand-text p {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        .db-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.35rem 0.75rem;
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .db-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1040px;
+            margin: 2rem auto 0;
+            padding: 0 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.75rem;
+        }
+
+        /* Alerts */
+        .alert {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.9rem 1.15rem;
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            font-weight: 500;
+            animation: slideDown 0.25s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .alert-success {
+            background-color: var(--success-soft);
+            border: 1px solid var(--success-border);
+            color: #065f46;
+        }
+
+        .alert-error {
+            background-color: var(--danger-soft);
+            border: 1px solid var(--danger-border);
+            color: #991b1b;
+        }
+
+        .alert-close {
+            background: transparent;
+            border: none;
+            color: inherit;
+            cursor: pointer;
+            font-size: 1.1rem;
+            line-height: 1;
+            opacity: 0.7;
+            padding: 0.2rem;
+        }
+
+        .alert-close:hover {
+            opacity: 1;
+        }
+
+        /* Card Shared */
+        .card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .card-title-group h2 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-title-group p {
+            font-size: 0.84rem;
+            color: var(--text-muted);
+            margin-top: 0.15rem;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        /* Edit Mode Banner inside Form */
+        .edit-mode-banner {
+            background: var(--warning-soft);
+            border: 1px solid #fde68a;
+            color: #92400e;
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-md);
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        /* Arithmetic Form Grid */
+        .calc-form-grid {
+            display: grid;
+            grid-template-columns: 1fr 140px 1fr auto;
+            gap: 1rem;
+            align-items: end;
+        }
+
+        @media (max-width: 768px) {
+            .calc-form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+        }
+
+        .form-label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .form-label code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.74rem;
+            background: var(--bg-subtle);
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+            color: var(--primary);
+        }
+
+        .form-control, .form-select {
+            height: 46px;
+            padding: 0 0.95rem;
+            border-radius: var(--radius-md);
+            border: 1.5px solid var(--border-color);
+            background-color: var(--bg-surface);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            transition: all 0.15s ease;
+            width: 100%;
+        }
+
+        .form-select {
+            text-align: center;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+            cursor: pointer;
+        }
+
+        .form-control:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
+        }
+
+        .form-control::placeholder {
+            font-family: 'Inter', sans-serif;
+            font-weight: 400;
+            font-size: 0.9rem;
+            color: #94a3b8;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            height: 46px;
+            padding: 0 1.4rem;
+            border-radius: var(--radius-md);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.92rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.15s ease;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), #4338ca);
+            color: #ffffff;
+            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.28);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--primary-hover), #3730a3);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+        }
+
+        .btn-secondary {
+            background: var(--bg-subtle);
+            color: var(--text-secondary);
+            border-color: var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+            color: var(--text-primary);
+        }
+
+        .btn-sm {
+            height: 34px;
+            padding: 0 0.75rem;
+            font-size: 0.8rem;
+            border-radius: 8px;
+            gap: 0.35rem;
+        }
+
+        .btn-edit {
+            background: var(--primary-soft);
+            color: var(--primary);
+            border: 1px solid rgba(79, 70, 229, 0.2);
+        }
+
+        .btn-edit:hover {
+            background: var(--primary);
+            color: #ffffff;
+        }
+
+        .btn-delete {
+            background: var(--danger-soft);
+            color: var(--danger);
+            border: 1px solid var(--danger-border);
+        }
+
+        .btn-delete:hover {
+            background: var(--danger);
+            color: #ffffff;
+        }
+
+        /* Result Display Panel inside Form Card */
+        .result-display-panel {
+            margin-top: 1.35rem;
+            padding: 1.1rem 1.35rem;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+            border: 1px solid #c7d2fe;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .result-label-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+        }
+
+        .result-tag {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .result-expression {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .result-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* Table Styles */
+        .table-meta {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--primary);
+            background: var(--primary-soft);
+            padding: 0.3rem 0.75rem;
+            border-radius: 999px;
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        .data-table th {
+            background: var(--bg-subtle);
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 0.85rem 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table th code {
+            text-transform: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.82rem;
+        }
+
+        .data-table td {
+            padding: 0.95rem 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.95rem;
+            vertical-align: middle;
+        }
+
+        .data-table tbody tr {
+            transition: background-color 0.12s ease;
+        }
+
+        .data-table tbody tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .data-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .row-highlight {
+            background-color: #f5f3ff !important;
+        }
+
+        .col-id {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            width: 70px;
+        }
+
+        .col-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .col-operator {
+            text-align: center;
+            width: 120px;
+        }
+
+        .op-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.05rem;
+            font-weight: 700;
+            background: var(--primary-soft);
+            color: var(--primary);
+            border: 1px solid rgba(79, 70, 229, 0.2);
+        }
+
+        .col-result {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 1.02rem;
+            color: var(--success);
+        }
+
+        .col-actions {
+            text-align: right;
+            width: 200px;
+        }
+
+        .action-group {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            justify-content: flex-end;
+        }
+
+        /* Empty State */
+        .empty-state {
+            padding: 3.5rem 1.5rem;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .empty-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--bg-subtle);
+            color: var(--text-muted);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.35rem;
+            font-weight: 700;
+            margin-bottom: 0.85rem;
+        }
+
+        .empty-state h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .empty-state p {
+            font-size: 0.875rem;
+        }
+
+        /* Modal Overlay (for Quick Edit & Delete Confirmation) */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.55);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            z-index: 50;
+        }
+
+        .modal-backdrop.active {
+            display: flex;
+            animation: fadeIn 0.15s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-dialog {
+            background: var(--bg-surface);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            width: 100%;
+            max-width: 480px;
+            overflow: hidden;
+            animation: scaleUp 0.18s ease-out;
+        }
+
+        @keyframes scaleUp {
+            from { transform: scale(0.96); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-header {
+            padding: 1.15rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-header h3 {
+            font-size: 1.02rem;
+            font-weight: 700;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            background: var(--bg-subtle);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.65rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Topbar -->
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a href="/" class="brand">
+                <div class="brand-icon">±×</div>
+                <div class="brand-text">
+                    <h1>Aplikasi Operasi Aritmatika</h1>
+                    <p>Spring Boot JPA &bull; Tabel PostgreSQL: <code>hasil_aritmatika</code></p>
+                </div>
+            </a>
+            <div class="db-badge">
+                <span class="db-dot"></span>
+                <span>PostgreSQL Connected</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+
+        <!-- Flash Notification Messages -->
+        <div th:if="${successMessage}" class="alert alert-success" role="alert">
+            <span th:text="${successMessage}">Berhasil disimpan.</span>
+            <button type="button" class="alert-close" onclick="this.parentElement.remove()" aria-label="Tutup">&times;</button>
+        </div>
+
+        <div th:if="${errorMessage}" class="alert alert-error" role="alert">
+            <span th:text="${errorMessage}">Terjadi kesalahan.</span>
+            <button type="button" class="alert-close" onclick="this.parentElement.remove()" aria-label="Tutup">&times;</button>
+        </div>
+
+        <!-- SECTION 1: FORM OPERASI ARITMATIKA -->
+        <section class="card">
+            <div class="card-header">
+                <div class="card-title-group">
+                    <h2 th:text="${editItem != null ? 'Edit Operasi Aritmatika (#' + editItem.id + ')' : 'Form Operasi Aritmatika'}">
+                        Form Operasi Aritmatika
+                    </h2>
+                    <p>Masukkan dua bilangan, pilih simbol operator aritmatika, lalu klik tombol <strong>Result</strong>.</p>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <!-- Banner jika sedang dalam mode Edit via URL -->
+                <div th:if="${editItem != null}" class="edit-mode-banner">
+                    <span>Sedang mengedit baris data <strong>#<span th:text="${editItem.id}">1</span></strong> dari tabel <code>hasil_aritmatika</code>.</span>
+                    <a href="/" class="btn btn-secondary btn-sm">Batal Edit</a>
+                </div>
+
+                <!-- Form Kalkulasi / Update -->
+                <form th:action="${editItem != null ? '/update/' + editItem.id : '/calculate'}" method="post" id="arithmeticForm">
+                    <div class="calc-form-grid">
+                        <!-- Input Bilangan 1 -->
+                        <div class="form-group">
+                            <label for="bilangan1" class="form-label">
+                                <span>Bilangan Pertama</span>
+                                <code>bilangan1</code>
+                            </label>
+                            <input
+                                type="number"
+                                step="any"
+                                id="bilangan1"
+                                name="bilangan1"
+                                class="form-control"
+                                placeholder="Contoh: 25"
+                                required
+                                th:value="${editItem != null ? editItem.bilangan1 : inputBilangan1}"
+                                oninput="updateLivePreview()"
+                            >
+                        </div>
+
+                        <!-- Dropdown Operator (+, *, -, /) -->
+                        <div class="form-group">
+                            <label for="operator" class="form-label">
+                                <span>Operator</span>
+                                <code>operator</code>
+                            </label>
+                            <select
+                                id="operator"
+                                name="operator"
+                                class="form-select"
+                                required
+                                onchange="updateLivePreview()"
+                            >
+                                <option value="+" th:selected="${(editItem != null and editItem.operator == '+') or (inputOperator == '+')}">+</option>
+                                <option value="*" th:selected="${(editItem != null and editItem.operator == '*') or (inputOperator == '*')}">*</option>
+                                <option value="-" th:selected="${(editItem != null and editItem.operator == '-') or (inputOperator == '-')}">-</option>
+                                <option value="/" th:selected="${(editItem != null and editItem.operator == '/') or (inputOperator == '/')}">/</option>
+                            </select>
+                        </div>
+
+                        <!-- Input Bilangan 2 -->
+                        <div class="form-group">
+                            <label for="bilangan2" class="form-label">
+                                <span>Bilangan Kedua</span>
+                                <code>bilangan2</code>
+                            </label>
+                            <input
+                                type="number"
+                                step="any"
+                                id="bilangan2"
+                                name="bilangan2"
+                                class="form-control"
+                                placeholder="Contoh: 5"
+                                required
+                                th:value="${editItem != null ? editItem.bilangan2 : inputBilangan2}"
+                                oninput="updateLivePreview()"
+                            >
+                        </div>
+
+                        <!-- Submit Button: Result -->
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary" id="btnResult">
+                                <span th:text="${editItem != null ? 'Update Result' : 'Result'}">Result</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Panel Hasil Aritmatika (Menampilkan hasil kalkulasi terbaru & live preview) -->
+                <div class="result-display-panel" id="resultPanel">
+                    <div class="result-label-wrap">
+                        <span class="result-tag">Result</span>
+                        <span class="result-expression" id="resultExpression"
+                              th:text="${latestCalculation != null
+                                ? latestCalculation.formattedBilangan1 + ' ' + latestCalculation.operator + ' ' + latestCalculation.formattedBilangan2 + ' ='
+                                : 'Masukkan bilangan dan tekan tombol Result'}">
+                            Masukkan bilangan dan tekan tombol Result
+                        </span>
+                    </div>
+                    <div class="result-value" id="resultValue"
+                         th:text="${latestCalculation != null ? latestCalculation.formattedResult : '—'}">
+                        —
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: TABEL DATABASE PSQL (hasil_aritmatika) -->
+        <section class="card">
+            <div class="card-header">
+                <div class="card-title-group">
+                    <h2>Tabel Database: <code>hasil_aritmatika</code></h2>
+                    <p>Seluruh riwayat operasi aritmatika yang tersimpan di dalam database PostgreSQL.</p>
+                </div>
+                <div class="table-meta">
+                    <span th:text="${#lists.size(listHasil)} + ' Baris Data'">0 Baris Data</span>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="data-table" th:if="${!#lists.isEmpty(listHasil)}">
+                    <thead>
+                        <tr>
+                            <th class="col-id">No</th>
+                            <th><code>bilangan1</code></th>
+                            <th class="col-operator"><code>operator</code></th>
+                            <th><code>bilangan2</code></th>
+                            <th><code>result</code></th>
+                            <th class="col-actions">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="item, stat : ${listHasil}"
+                            th:classappend="${latestCalculation != null and latestCalculation.id == item.id} ? 'row-highlight' : ''">
+                            <td class="col-id" th:text="${stat.count}">1</td>
+                            <td class="col-number" th:text="${item.formattedBilangan1}">10</td>
+                            <td class="col-operator">
+                                <span class="op-badge" th:text="${item.operator}">+</span>
+                            </td>
+                            <td class="col-number" th:text="${item.formattedBilangan2}">5</td>
+                            <td class="col-result" th:text="${item.formattedResult}">15</td>
+                            <td class="col-actions">
+                                <div class="action-group">
+                                    <!-- Tombol Edit -->
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-edit"
+                                        th:data-id="${item.id}"
+                                        th:data-b1="${item.bilangan1}"
+                                        th:data-op="${item.operator}"
+                                        th:data-b2="${item.bilangan2}"
+                                        onclick="openEditModal(this)"
+                                    >
+                                        Edit
+                                    </button>
+
+                                    <!-- Tombol Delete -->
+                                    <form th:action="@{/delete/{id}(id=${item.id})}" method="post" style="display:inline;"
+                                          onsubmit="return confirm('Hapus baris operasi ini dari tampilan web dan database PostgreSQL?');">
+                                        <button type="submit" class="btn btn-sm btn-delete">
+                                            Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- Empty State jika tabel masih kosong -->
+                <div class="empty-state" th:if="${#lists.isEmpty(listHasil)}">
+                    <div class="empty-icon">∑</div>
+                    <h3>Belum Ada Data Operasi Aritmatika</h3>
+                    <p>Silakan masukkan <code>bilangan1</code>, pilih <code>operator</code>, masukkan <code>bilangan2</code>, lalu klik tombol <strong>Result</strong> di atas.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL EDIT OPERASI ARITMATIKA -->
+    <div class="modal-backdrop" id="editModal">
+        <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
+            <div class="modal-header">
+                <h3 id="editModalTitle">Edit Operasi Aritmatika</h3>
+                <button type="button" class="alert-close" onclick="closeEditModal()" aria-label="Tutup">&times;</button>
+            </div>
+            <form id="editModalForm" method="post">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="modalBilangan1" class="form-label">
+                            <span>Bilangan Pertama</span>
+                            <code>bilangan1</code>
+                        </label>
+                        <input type="number" step="any" id="modalBilangan1" name="bilangan1" class="form-control" required oninput="updateModalPreview()">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="modalOperator" class="form-label">
+                            <span>Operator</span>
+                            <code>operator</code>
+                        </label>
+                        <select id="modalOperator" name="operator" class="form-select" required onchange="updateModalPreview()">
+                            <option value="+">+</option>
+                            <option value="*">*</option>
+                            <option value="-">-</option>
+                            <option value="/">/</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="modalBilangan2" class="form-label">
+                            <span>Bilangan Kedua</span>
+                            <code>bilangan2</code>
+                        </label>
+                        <input type="number" step="any" id="modalBilangan2" name="bilangan2" class="form-control" required oninput="updateModalPreview()">
+                    </div>
+
+                    <div class="result-display-panel" style="margin-top: 0.25rem;">
+                        <div class="result-label-wrap">
+                            <span class="result-tag">Preview Result</span>
+                            <span class="result-expression" id="modalPreviewExp">-</span>
+                        </div>
+                        <div class="result-value" id="modalPreviewVal">—</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeEditModal()">Batal</button>
+                    <button type="submit" class="btn btn-primary btn-sm">Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function computeArithmetic(b1Str, op, b2Str) {
+            if (b1Str === '' || b2Str === '') return null;
+            const b1 = parseFloat(b1Str);
+            const b2 = parseFloat(b2Str);
+            if (isNaN(b1) || isNaN(b2)) return null;
+
+            switch (op) {
+                case '+': return b1 + b2;
+                case '*': return b1 * b2;
+                case '-': return b1 - b2;
+                case '/':
+                    if (b2 === 0) return 'Error (÷ 0)';
+                    return b1 / b2;
+                default: return null;
+            }
+        }
+
+        function formatNum(val) {
+            if (typeof val === 'string') return val;
+            if (val === null || val === undefined || isNaN(val)) return '—';
+            if (Number.isInteger(val)) return val.toString();
+            return parseFloat(val.toFixed(6)).toString();
+        }
+
+        function updateLivePreview() {
+            const b1 = document.getElementById('bilangan1').value;
+            const op = document.getElementById('operator').value;
+            const b2 = document.getElementById('bilangan2').value;
+            const expEl = document.getElementById('resultExpression');
+            const valEl = document.getElementById('resultValue');
+
+            if (b1 !== '' && b2 !== '') {
+                const res = computeArithmetic(b1, op, b2);
+                expEl.textContent = `${b1} ${op} ${b2} =`;
+                valEl.textContent = formatNum(res);
+            }
+        }
+
+        function openEditModal(button) {
+            const id = button.getAttribute('data-id');
+            const b1 = button.getAttribute('data-b1');
+            const op = button.getAttribute('data-op');
+            const b2 = button.getAttribute('data-b2');
+
+            const form = document.getElementById('editModalForm');
+            form.action = '/update/' + id;
+
+            document.getElementById('editModalTitle').textContent = 'Edit Data Operasi #' + id;
+            document.getElementById('modalBilangan1').value = b1;
+            document.getElementById('modalOperator').value = op;
+            document.getElementById('modalBilangan2').value = b2;
+
+            updateModalPreview();
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('active');
+        }
+
+        function updateModalPreview() {
+            const b1 = document.getElementById('modalBilangan1').value;
+            const op = document.getElementById('modalOperator').value;
+            const b2 = document.getElementById('modalBilangan2').value;
+            const res = computeArithmetic(b1, op, b2);
+
+            document.getElementById('modalPreviewExp').textContent = (b1 !== '' && b2 !== '') ? `${b1} ${op} ${b2} =` : '-';
+            document.getElementById('modalPreviewVal').textContent = formatNum(res);
+        }
+
+        // Close modal when clicking outside dialog
+        document.getElementById('editModal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeEditModal();
+            }
+        });
+    </script>
+</body>
+</html>
+
